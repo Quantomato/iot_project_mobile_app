@@ -2,8 +2,8 @@
 
 const int emitters[] = {13, 14, 25, 26, 27};
 
-#define servo1Pin 25
-#define servo2Pin 26
+#define servo1Pin 18
+#define servo2Pin 19
 
 int lowered = 10;
 int raised = 120;
@@ -42,6 +42,10 @@ void sendIRBurst(int pin, int bursts) {
 }
 
 void loop() {
+  //Get parkingAllowed and bollardRaised variables from database
+  
+
+
   Serial.println("bursting");
 
   for (int i = 0; i < 5; i++) {
