@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "797603261713",
+    "project_id": "bollardbros-1afdb",
+    "storage_bucket": "bollardbros-1afdb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:797603261713:android:66ba24e45e4d9e7d1770b0",
+        "android_client_info": {
+          "package_name": "com.example.iot_project_mobile_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBuV0b8LRsF-IhUzI65j6wWLA0ybUqIIWI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

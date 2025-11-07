@@ -1,6 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:iot_project_mobile_app/firebase_options.dart';
+import 'package:iot_project_mobile_app/utils/snackbar_utils.dart';
+
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
@@ -8,6 +14,7 @@ void main() async{
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform,);
   runApp(const MyApp());
 }
 
@@ -40,6 +47,24 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _textControllerEmail = TextEditingController();
   final TextEditingController _textControllerPassword = TextEditingController();
+
+  Future<UserCredential?> canUserSignin(String email, String password) async{
+    try{
+      final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(email: email, password: password);
+      print("Logged in Successfully");
+      return credential;
+    }on FirebaseAuthException catch(e){
+      if(!mounted){return null;}
+      if (e.code == 'user-not-found') {
+        print("Email does not exist.");
+        SnackBarUtils.showErrorSnackBar(context, "User with inputted email not found!");
+      } else if (e.code == 'wrong-password') {
+        print("Incorrect password.");
+        SnackBarUtils.showErrorSnackBar(context, "Password incorrect!");
+      }
+      return null;
+    }
+  }
 
   @override
   void dispose(){
@@ -101,9 +126,16 @@ class _LoginPageState extends State<LoginPage> {
               width: 200,
               height: 50,
               child: ElevatedButton(
-                onPressed: () {
+                onPressed: () async{
                   String email = _textControllerEmail.text;
                   String password = _textControllerPassword.text;
+                  final user = await canUserSignin(email, password);
+                  if(user != null){
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => MainPage(title: "Main Page", user: user,))
+                    );
+                  }
                 },
                 child: const Text(
                   'Login',
@@ -150,28 +182,37 @@ class _RegisterPageState extends State<RegisterPage>{
   final TextEditingController _textControllerEmail = TextEditingController();
   final TextEditingController _textControllerPassword = TextEditingController();
   final TextEditingController _textControllerConfirmPassword = TextEditingController();
-  bool _isSnackBarActive = false;
 
-  void _showErrorSnackBar(String message) {
-    if (_isSnackBarActive) return;
+  //Function to check if user can register
+  Future<bool> canUserRegister(String email, String password) async {
+    try {
+      final auth = FirebaseAuth.instance;
+      // Get a list of sign-in methods for the provided email
+      final signInMethods =
+          await auth.createUserWithEmailAndPassword(email: email, password: password,);
 
-    _isSnackBarActive = true;
-    final messenger = ScaffoldMessenger.of(context);
-
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: const TextStyle(color: Colors.white),
-        ),
-        backgroundColor: Colors.red,
-        duration: const Duration(seconds: 3),
-        behavior: SnackBarBehavior.floating,
-      ),
-    ).closed.then((_) {
-      // Reset flag when snackbar disappears
-      _isSnackBarActive = false;
-    });
+      //Registration Succeeded
+      return true;
+    } on FirebaseAuthException catch (e) {
+      // Handle invalid email formats gracefully
+      if(!mounted){return false;}
+      if (e.code == 'email-already-in-use') {
+        SnackBarUtils.showErrorSnackBar(context, 'Email is already in use!');
+        return false;
+      }else if(e.code == 'invalid-email'){
+        SnackBarUtils.showErrorSnackBar(context, 'Invalid Email Format');
+        return false;
+      }else if(e.code == 'weak-password'){
+        SnackBarUtils.showErrorSnackBar(context, 'Password is too weak!');
+        return false;
+      }else{
+        SnackBarUtils.showErrorSnackBar(context, 'Registration Failed: ${e.message}');
+        return false;
+      }
+    }catch (e) {
+      //When I catch you
+      return false;
+    }
   }
 
   @override
@@ -248,21 +289,39 @@ class _RegisterPageState extends State<RegisterPage>{
               width: 200,
               height: 50,
               child: ElevatedButton(
-                onPressed: () {
+                onPressed: () async{
                   String email = _textControllerEmail.text.trim();
                   String password = _textControllerPassword.text.trim();
                   String confirmPassword = _textControllerConfirmPassword.text.trim();
 
                   if (email.isEmpty) {
-                    _showErrorSnackBar('Email field is empty!');
+                    SnackBarUtils.showErrorSnackBar(context, 'Email field is empty!');
                   } else if (password.isEmpty || confirmPassword.isEmpty) {
-                    _showErrorSnackBar('Password or Confirm Password field is empty!');
+                    SnackBarUtils.showErrorSnackBar(context, 'Password or Confirm Password field is empty!');
                   } else if (password != confirmPassword) {
-                    _showErrorSnackBar('Passwords do not match!');
+                    SnackBarUtils.showErrorSnackBar(context, 'Passwords do not match!');
                   } else if (password.length < 8){
-                    _showErrorSnackBar('Password is too short!');
+                    SnackBarUtils.showErrorSnackBar(context, 'Password is too short!');
                   } else {
                     //Register user logic here
+                    bool canRegister = await canUserRegister(email, password);
+                    if(canRegister){
+                      //Display snackbar to say user registered!
+                      final messenger = ScaffoldMessenger.of(context);
+                      messenger.showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'User Successfully Registered!',
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                          backgroundColor: Colors.green,
+                          duration: const Duration(seconds: 5),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      ).closed.then((_) {
+                      });
+                      Navigator.pop(context);
+                    }
                   }
                 },
                 child: const Text(
@@ -290,5 +349,142 @@ class _RegisterPageState extends State<RegisterPage>{
       ),
     );
   }
+}
+//----------------------------------------------------------------------------------------------------------------------------------
+
+//MainPage Widgets-----------------------------------------------------------------------------------------------------------------
+class MainPage extends StatefulWidget {
+  const MainPage({super.key, required this.title, required this.user});
+
+  final String title;
+  final UserCredential? user;
+
+  @override
+  State<MainPage> createState() => _MainPageState();
+}
+
+class _MainPageState extends State<MainPage>{
+  bool _parkingSpaceTaken = false;
+  int _parkingSpaceIndex = 0;
+  bool _bollardRaised = false;
+
+  void _toggleSpaceTaken() {
+    setState(() {
+      _parkingSpaceTaken = !_parkingSpaceTaken;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context){
+    final userCredential = widget.user;
+    final email = userCredential?.user?.email ?? 'No email found';
+
+    return Scaffold(
+      body: Stack(
+        children: <Widget>[
+          //Top Textbox (Displays user email)
+          Align(
+            alignment: Alignment.topCenter,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 80.0),
+              child: Container(
+                padding: const EdgeInsets.only(right:0),
+                child: Text('Welcome $email', textAlign: TextAlign.center, style: TextStyle(fontSize: 20)),
+              ),
+            ),
+          ),
+
+          //Logout button
+          Align(
+            alignment: Alignment.topRight,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 60.0),
+              child: SizedBox(
+                width: 120,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => LoginPage(title: "Login Page",))
+                      );
+                  },
+                  child: const Text("Logout"),
+                ),
+              ),
+            ),
+          ),
+
+          //Parking Space Reserved or not
+          Align(
+            alignment: Alignment.center,
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              color: Colors.green[100],
+              child: const Text('Center Text Box', style: TextStyle(fontSize: 20)),
+            ),
+          ),
+
+          //Scan RFID Button OR Display Raise/Lower Bollard Switch
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 30.0),
+              child: _parkingSpaceTaken ?
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  //When user has parking space
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      const Text(
+                        'Raise/Lower Bollard:', 
+                        style: TextStyle(fontSize: 18),
+                      ),
+                      const SizedBox(width: 10),
+                    //Switch to Raise/Lower Bollard
+                      Switch(
+                        value: _bollardRaised,
+                        onChanged: (newValue) {
+                          setState(() {
+                            _bollardRaised = newValue;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 30),
+                  Text(
+                    "Bollard Currently: ${_bollardRaised ? "Raised" : "Lowered"}",
+                    style: TextStyle(fontSize: 24),
+                  ),
+                  const SizedBox(height: 30),
+                  ElevatedButton(
+                    onPressed: () {
+                      _bollardRaised ? SnackBarUtils.showErrorSnackBar(context, "Please lower your bollard before surrendering your parking spot.") : _toggleSpaceTaken();
+                    },
+                    child: const Text('Surrender Parking Space'),
+                  ),
+                  const SizedBox(height:150),
+                ],
+              )
+              //Show the scan RFID button if user does not have parking space
+              : Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  ElevatedButton(
+                  onPressed: _toggleSpaceTaken,
+                  child: const Text('Scan RFID'),
+                  ),
+                  const SizedBox(height:150),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  } 
 }
 
