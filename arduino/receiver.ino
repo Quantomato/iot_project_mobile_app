@@ -2,18 +2,6 @@
 
 const int pins[] = {13, 18, 19, 21, 22};
 
-#define servo1Pin 25
-#define servo2Pin 26
-
-int lowered = 10;
-int raised = 120;
-
-Servo servo1;
-Servo servo2;
-
-bool bollard1Raised = false;
-bool bollard2Raised = false;
-
 bool parkingAllowed1 = false;
 bool parkingAllowed2 = false;
 
@@ -29,9 +17,6 @@ void setup() {
   pinMode(pins[2], INPUT_PULLUP);
   pinMode(pins[3], INPUT_PULLUP);
   pinMode(pins[4], INPUT_PULLUP);
-
-  servo1.attach(servo1Pin);
-  servo2.attach(servo2Pin);
 }
 
 void loop() {
@@ -72,17 +57,5 @@ void loop() {
       count = 0;
       Serial.println("\nSANITY CHECK\n");
     }
-  }
-
-  if(bollard1Raised && parkingAllowed1){
-    servo1.write(raised);
-  } else{
-    servo1.write(lowered);
-  }
-
-  if(bollard2Raised && parkingAllowed2){
-    servo2.write(raised);
-  } else{
-    servo2.write(lowered);
   }
 }
