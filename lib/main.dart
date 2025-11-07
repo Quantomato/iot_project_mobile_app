@@ -517,10 +517,50 @@ class _MainPageState extends State<MainPage>{
                     //Switch to Raise/Lower Bollard
                       Switch(
                         value: _bollardRaised,
-                        onChanged: (newValue) {
-                          setState(() {
-                            _bollardRaised = newValue;
-                          });
+                        onChanged: (newValue) async {
+                          try {
+                            // Fetch the document matching the current parking space index
+                            final querySnapshot = await FirebaseFirestore.instance
+                                .collection('parkingSpaces')
+                                .where('spaceIndex', isEqualTo: _parkingSpaceIndex)
+                                .limit(1)
+                                .get();
+
+                            if (querySnapshot.docs.isEmpty) {
+                              SnackBarUtils.showErrorSnackBar(
+                                  context, "Parking space document not found.");
+                              return;
+                            }
+
+                            final doc = querySnapshot.docs.first;
+                            final data = doc.data();
+
+                            if (newValue) {
+                              // User wants to raise the bollard
+                              final canRaise = data['canRaiseBollard'] ?? false;
+
+                              if (canRaise) {
+                                await doc.reference.update({'bollardsRaised': true});
+                                setState(() {
+                                  _bollardRaised = true;
+                                });
+                              } else {
+                                // Cannot raise bollard
+                                SnackBarUtils.showErrorSnackBar(
+                                    context, "You can't raise the bollard, fix your parking or clear other obstacles.");
+                              }
+                            } else {
+                              // User wants to lower the bollard
+                              await doc.reference.update({'bollardsRaised': false});
+                              setState(() {
+                                _bollardRaised = false;
+                              });
+                            }
+                          } catch (e) {
+                            print('Error updating bollard: $e');
+                            SnackBarUtils.showErrorSnackBar(
+                                context, "Failed to update bollard status.");
+                          }
                         },
                       ),
                     ],
