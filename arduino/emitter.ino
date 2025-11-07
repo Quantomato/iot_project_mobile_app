@@ -1,54 +1,65 @@
 #include <ESP32Servo.h>
 
-const int emitterPin = 23;
-#define LED2_PIN 26
-#define SERVO1_PIN 32
-#define SERVO2_PIN 33
+const int emitters[] = {13, 14, 25, 26, 27};
 
-bool servo1Open = false;
-bool servo2Open = false;
+#define servo1Pin 25
+#define servo2Pin 26
 
-int servo1Low = 0;
-int servo1High = 90;
-int servo2Low = 0;
-int servo2High = 90;
+int lowered = 10;
+int raised = 120;
 
 Servo servo1;
 Servo servo2;
 
+bool bollard1Raised = false;
+bool bollard2Raised = false;
+
+bool parkingAllowed1 = false;
+bool parkingAllowed2 = false;
+
 void setup() {
-  servo1.attach(SERVO1_PIN);
-  servo2.attach(SERVO2_PIN);
-  analogWriteFrequency(emitterPin, 38000);
   Serial.begin(115200);
+
+  //set up emitter frequency for proper reading later
+  for (int i = 0; i < 5; i++) {
+    analogWriteFrequency(emitters[i], 38000);
+    analogWriteResolution(emitters[i], 8);
+    pinMode(emitters[i], OUTPUT);
+    analogWrite(emitters[i], 0);
+  }
+
+  servo1.attach(servo1Pin);
+  servo2.attach(servo2Pin);
+}
+
+void sendIRBurst(int pin, int bursts) {
+  for (int i = 0; i < bursts; i++) {
+    analogWrite(pin, 170);
+    delayMicroseconds(600);
+    analogWrite(pin, 0);
+    delayMicroseconds(600);
+  }
 }
 
 void loop() {
-  Serial.println("Emitting burst...");
-  unsigned long start = millis();
-  //Burst LEDS for 38hz so the receivers can properly see them
-  while (millis() - start < 200) {
-    analogWrite(emitterPin, 170);
-    delay(2);
-    analogWrite(emitterPin, 0);
-    delay(2);
-  }
-  analogWrite(emitterPin, 0);
-  //delay 5 seconds between each burst 
-  delay(5000);
+  Serial.println("bursting");
 
-  //open or close servo 1 bollards
-  if(servo1Open){
-    servo1.write(servo1Low);
-  } else{
-    servo1.write(servo1High);
+  for (int i = 0; i < 5; i++) {
+    sendIRBurst(emitters[i], 25);
+    delay(50);
   }
 
-  //open or close servo 2 bollards
-  if(servo2Open){
-    servo2.write(servo2Low);
+  delay(500);
+
+  if(bollard1Raised && parkingAllowed1){
+    servo1.write(raised);
   } else{
-    servo2.write(servo2High);
+    servo1.write(lowered);
+  }
+
+  if(bollard2Raised && parkingAllowed2){
+    servo2.write(raised);
+  } else{
+    servo2.write(lowered);
   }
 }
-  
