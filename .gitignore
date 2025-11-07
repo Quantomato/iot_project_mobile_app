@@ -46,3 +46,6 @@ app.*.map.json
 
 # Ignore JSON file for obvious reasons
 /data/espDatabaseInfo.json
+arduino/data/espDatabaseInfo.json
+arduino/emitter/data/espDatabaseInfo.json
+arduino/receiver/data/espDatabaseInfo.json
