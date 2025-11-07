@@ -45,5 +45,7 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NFCReaderUsageDescription</key>
+    <string>This app uses NFC to read parking space tags for the IoT parking system.</string>
 </dict>
 </plist>

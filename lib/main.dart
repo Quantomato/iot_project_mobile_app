@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:iot_project_mobile_app/firebase_options.dart';
 import 'package:iot_project_mobile_app/utils/snackbar_utils.dart';
+import 'package:iot_project_mobile_app/utils/nfc_reader_utils.dart';
 
 
 void main() async{
@@ -368,10 +370,76 @@ class _MainPageState extends State<MainPage>{
   int _parkingSpaceIndex = 0;
   bool _bollardRaised = false;
 
-  void _toggleSpaceTaken() {
-    setState(() {
-      _parkingSpaceTaken = !_parkingSpaceTaken;
-    });
+  void _removeParkingSpace() async {
+    //Get Database jawn
+    final userCredential = widget.user;
+    final currentUser = userCredential?.user;
+    if (currentUser == null) return;
+    try {
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('parkingSpaces')
+          .where('userID', isEqualTo: currentUser.uid)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        // User has a parking space
+        final doc = querySnapshot.docs.first;
+        final data = doc.data();
+        DocumentReference parkingSpotRef = doc.reference;
+        //Update Database First
+        await parkingSpotRef.update({'userID': ""});
+        SnackBarUtils.showSuccessSnackBar(context, 'Successfully surrendered parking spot #$_parkingSpaceIndex!');
+        setState((){
+          _parkingSpaceIndex = 0;
+          _parkingSpaceTaken = false;
+        });
+      } else {
+        // User does not have a parking space (should be impossible)
+        SnackBarUtils.showErrorSnackBar(context, 'How on earth did you pull this off?');
+      }
+    } catch (e) {}
+  }
+
+  Future<void> _checkUserParkingSpace() async {
+    final userCredential = widget.user;
+    final currentUser = userCredential?.user;
+
+    if (currentUser == null) return;
+
+    try {
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('parkingSpaces')
+          .where('userID', isEqualTo: currentUser.uid)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        // User has a parking space
+        final doc = querySnapshot.docs.first;
+        final data = doc.data();
+        setState(() {
+          _parkingSpaceIndex = data['spaceIndex'] ?? 0;
+          _parkingSpaceTaken = true;
+        });
+      } else {
+        // User does not have a parking space
+        setState(() {
+          _parkingSpaceIndex = 0;
+          _parkingSpaceTaken = false;
+        });
+      }
+    } catch (e) {
+      print('Error checking user parking space: $e');
+      setState(() {
+        _parkingSpaceTaken = false;
+        _parkingSpaceIndex = 0;
+      });
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _checkUserParkingSpace();
   }
 
   @override
@@ -420,8 +488,11 @@ class _MainPageState extends State<MainPage>{
             alignment: Alignment.center,
             child: Container(
               padding: const EdgeInsets.all(12),
-              color: Colors.green[100],
-              child: const Text('Center Text Box', style: TextStyle(fontSize: 20)),
+              color: _parkingSpaceTaken ? Colors.green : Colors.red,
+              child: Text(
+                _parkingSpaceTaken ? 'Parking Space #$_parkingSpaceIndex taken' : 'No Parking Space Taken',
+                style: TextStyle(fontSize: 20)
+              ),
             ),
           ),
 
@@ -462,7 +533,7 @@ class _MainPageState extends State<MainPage>{
                   const SizedBox(height: 30),
                   ElevatedButton(
                     onPressed: () {
-                      _bollardRaised ? SnackBarUtils.showErrorSnackBar(context, "Please lower your bollard before surrendering your parking spot.") : _toggleSpaceTaken();
+                      _bollardRaised ? SnackBarUtils.showErrorSnackBar(context, "Please lower your bollard before surrendering your parking spot.") : _removeParkingSpace();
                     },
                     child: const Text('Surrender Parking Space'),
                   ),
@@ -474,7 +545,15 @@ class _MainPageState extends State<MainPage>{
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   ElevatedButton(
-                  onPressed: _toggleSpaceTaken,
+                  onPressed: () async {
+                    await _checkUserParkingSpace();
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => NfcReaderPage(user: userCredential,)),
+                    ).then((_){
+                      _checkUserParkingSpace();
+                    });
+                  },
                   child: const Text('Scan RFID'),
                   ),
                   const SizedBox(height:150),
@@ -487,4 +566,3 @@ class _MainPageState extends State<MainPage>{
     );
   } 
 }
-
