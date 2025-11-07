@@ -303,7 +303,7 @@ class _RegisterPageState extends State<RegisterPage>{
                   } else if (password != confirmPassword) {
                     SnackBarUtils.showErrorSnackBar(context, 'Passwords do not match!');
                   } else if (password.length < 8){
-                    SnackBarUtils.showErrorSnackBar(context, 'Password is too short!');
+                    SnackBarUtils.showErrorSnackBar(context, 'Password is too short, must be at least 8 characters long!');
                   } else {
                     //Register user logic here
                     bool canRegister = await canUserRegister(email, password);
