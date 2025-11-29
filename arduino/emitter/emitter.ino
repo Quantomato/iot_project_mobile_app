@@ -4,8 +4,6 @@
 #include <addons/TokenHelper.h>
 #include <ArduinoJson.h>
 
-const int emitters[] = {13, 14, 25, 26, 27};
-
 #define servo1Pin 18
 #define servo2Pin 19
 
@@ -58,13 +56,6 @@ void setup() {
   Firebase.reconnectWiFi(true);
 
   Serial.println("Firebase initialized with Service Account!");
-  //set up emitter frequency for proper reading later
-  for (int i = 0; i < 5; i++) {
-    analogWriteFrequency(emitters[i], 38000);
-    analogWriteResolution(emitters[i], 8);
-    pinMode(emitters[i], OUTPUT);
-    analogWrite(emitters[i], 0);
-  }
 
   servo1.attach(servo1Pin);
   servo2.attach(servo2Pin);
@@ -83,13 +74,6 @@ void loop() {
   //Get parkingAllowed and bollardRaised variables from database
   readBollardData("parkingSpaces/parkingSpace1", bollard1Raised, parkingAllowed1);
   readBollardData("parkingSpaces/parkingSpace2", bollard2Raised, parkingAllowed2);
-
-  Serial.println("bursting");
-
-  for (int i = 0; i < 5; i++) {
-    sendIRBurst(emitters[i], 25);
-    delay(50);
-  }
 
   delay(500);
 
