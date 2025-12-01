@@ -59,9 +59,6 @@ if (auth.token.uid.length() > 0) {
 } else {
   Serial.println("FAILED to authenticate — UID is empty.");
 }
-
-  //Serial.println(projectId);
-  //Serial.println(clientEmail);
   //-------------------------------------------------------------------------------------------------------------------------------------------
 }
 
@@ -116,15 +113,16 @@ void updateFirestoreBollard(bool canRaiseBollard, int index) {
     Serial.println("Firebase not ready yet!");
     return;
   }
-  
-  //Get document path
-  String documentPath;
-  if(index == 1){
-    documentPath = "parkingSpaces/parkingSpace1"; 
-  }else if(index == 2){
-    documentPath = "parkingSpaces/parkingSpace2"; 
+
+  const char* documentPath = nullptr;
+  if (index == 1) documentPath = "parkingSpaces/parkingSpace1";
+  else if (index == 2) documentPath = "parkingSpaces/parkingSpace2";
+  else {
+    Serial.println("Invalid index!");
+    return;
   }
 
+  // JSON payload formatted correctly for patchDocument()
   String updateJson = "{\"fields\": {\"canRaiseBollard\": {\"booleanValue\": ";
   updateJson += canRaiseBollard ? "true" : "false";
   updateJson += "}}}";
@@ -132,10 +130,18 @@ void updateFirestoreBollard(bool canRaiseBollard, int index) {
   Serial.println("Updating Firestore...");
   Serial.println(updateJson);
 
-  if (Firebase.Firestore.patchDocument(&fbdo, config.service_account.data.project_id, "", documentPath.c_str(), updateJson.c_str(), "")) {
+  if (Firebase.Firestore.patchDocument(&fbdo,
+                                       PROJECT_ID,
+                                       "",
+                                       documentPath,
+                                       updateJson.c_str(),
+                                       "canRaiseBollard")) {
     Serial.println("Successfully updated Firestore!");
   } else {
     Serial.print("Firestore update failed: ");
     Serial.println(fbdo.errorReason());
   }
 }
+
+
+

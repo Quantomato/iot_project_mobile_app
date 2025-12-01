@@ -3,7 +3,6 @@
 #include <Firebase_ESP_Client.h>
 #include <addons/TokenHelper.h>
 #include "credentials.h"
-#include <ArduinoJson.h>
 
 #define servo1Pin 18
 #define servo2Pin 19
@@ -83,6 +82,9 @@ void loop() {
   readBollardData("parkingSpaces/parkingSpace1", bollard1Raised, parkingAllowed1);
   readBollardData("parkingSpaces/parkingSpace2", bollard2Raised, parkingAllowed2);
 
+  Serial.print("Bollard1Raised ");
+  Serial.println(bollard1Raised);
+
   delay(500);
 
   if(bollard1Raised && parkingAllowed1){
@@ -99,17 +101,55 @@ void loop() {
 }
 
 void readBollardData(String path, bool &bollard, bool &parking) {
-    if (Firebase.Firestore.getDocument(fbdo, project_id, "", path)) {
-        if (fbdo.dataAvailable()) {
-            FirebaseJson json;
-            fbdo.to<FirebaseJson>(json);
-            bool bollardsRaisedValue;
-            bool carIsParkedValue;
-            if (json.get(bollardsRaisedValue, "bollardsRaised") &&
-                json.get(carIsParkedValue, "carIsParked")) {
-                bollard = bollardsRaisedValue;
-                parking = carIsParkedValue;
-            }
+
+    if (!Firebase.Firestore.getDocument(&fbdo, PROJECT_ID, "(default)", path.c_str())) {
+        Serial.print("Failed to read document: ");
+        Serial.println(fbdo.errorReason());
+        Serial.print("HTTP: ");
+        Serial.println(fbdo.httpCode());
+        Serial.print("PAYLOAD: ");
+        Serial.println(fbdo.payload());
+        return;
+    }
+
+    String payload = fbdo.payload();
+
+    if (payload.length() == 0) {
+        Serial.println("Empty payload!");
+        return;
+    }
+
+    Serial.print("Raw Payload: ");
+    Serial.println(payload);
+
+    // Extract boolean values from payload manually
+    int idx1 = payload.indexOf("\"bollardsRaised\"");
+    if (idx1 != -1) {
+        int valPos = payload.indexOf("booleanValue", idx1);
+        if (valPos != -1) {
+            String sub = payload.substring(valPos, valPos + 40);
+            bollard = sub.indexOf("true") != -1;
+            Serial.print("bollardsRaised = ");
+            Serial.println(bollard);
         }
+    } else {
+        Serial.println("bollardsRaised not found");
+    }
+
+    int idx2 = payload.indexOf("\"carIsParked\"");
+    if (idx2 != -1) {
+        int valPos = payload.indexOf("booleanValue", idx2);
+        if (valPos != -1) {
+            String sub = payload.substring(valPos, valPos + 40);
+            parking = sub.indexOf("true") != -1;
+            Serial.print("carIsParked = ");
+            Serial.println(parking);
+        }
+    } else {
+        Serial.println("carIsParked not found");
     }
 }
+
+
+
+
