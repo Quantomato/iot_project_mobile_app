@@ -90,6 +90,7 @@ class _NfcReaderPageState extends State<NfcReaderPage> {
 
   //NFC Session Manager
   Future<String> _startNfcSession() async {
+    if (!mounted) return 'error';
     setState(() {
       _status = 'Starting NFC session...';
       _tagId = null;
@@ -100,36 +101,50 @@ class _NfcReaderPageState extends State<NfcReaderPage> {
       // Poll for an NFC tag for up to 20 seconds
       NFCTag tag = await FlutterNfcKit.poll(timeout: Duration(seconds: 15));
 
+      if (!mounted) return 'error';
+
       // If no tag is returned, it likely timed out
       if (tag.id == null || tag.id!.isEmpty) {
-        setState(() {
-          _status = 'Program timed out';
-          _queryingNfc = false;
-        });
+        if(mounted){
+          setState(() {
+            _status = 'Program timed out';
+            _queryingNfc = false;
+          });
+        }
+        
         return 'error';
       }
 
       // Tag successfully read
       String id = tag.id!;
       bool spotValid = await _checkParkingSpot(id);
-      setState(() {
-        _status = 'Tag read successfully!';
-        _tagId = id;
-        _queryingNfc = false;
-      });
+      if(mounted){
+        setState(() {
+          _status = 'Tag read successfully!';
+          _tagId = id;
+          _queryingNfc = false;
+        });
+      }
+      
       //Call message
       return 'success';
     } on TimeoutException {
-      setState(() {
-        _status = 'NFC session timed out.';
-        _queryingNfc = false;
-      });
+      if(mounted){
+        setState(() {
+          _status = 'NFC session timed out.';
+          _queryingNfc = false;
+        });
+      }
+      
       return 'error';
     } on Exception catch (e) {
-      setState(() {
-        _status = 'NFC error: $e';
-        _queryingNfc = false;
-      });
+      if(mounted){
+        setState(() {
+          _status = 'NFC error: $e';
+          _queryingNfc = false;
+        });
+      }
+      
       return 'error';
     } finally {
       // Safely end the NFC session
@@ -169,6 +184,10 @@ class _NfcReaderPageState extends State<NfcReaderPage> {
               child: Padding(
               padding: const EdgeInsets.only(bottom:60.0),
                 child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.deepPurpleAccent,
+                    foregroundColor: Colors.white,
+                  ),
                   onPressed: () async{
                     await _startNfcSession();
                     // Check if successful and navigate back

@@ -77,93 +77,104 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            //Bollardbros text
-            SizedBox(
-              width: 260,
-              child: Text(
-                "BollardBros Login",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 31.0,
-                  fontWeight: FontWeight.bold,
+      backgroundColor: Colors.grey[300],
+      body: SafeArea(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              //Bollardbros text
+              SizedBox(
+                width: 260,
+                child: Text(
+                  "BollardBros Login",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 31.0,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 25),
-
-            // Email TextField
-            SizedBox(
-              width: 250,
-              child: TextField(
-                controller: _textControllerEmail,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  border: OutlineInputBorder(),
+              const SizedBox(height: 25),
+          
+              // Email TextField
+              SizedBox(
+                width: 250,
+                child: TextField(
+                  controller: _textControllerEmail,
+                  decoration: const InputDecoration(
+                    labelText: 'Email',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-
-            // Password TextField
-            SizedBox(
-              width: 250,
-              child: TextField(
-                controller: _textControllerPassword,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Password',
-                  border: OutlineInputBorder(),
+              const SizedBox(height: 16),
+          
+              // Password TextField
+              SizedBox(
+                width: 250,
+                child: TextField(
+                  controller: _textControllerPassword,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Password',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 50),
-
-            // Login button
-            SizedBox(
-              width: 200,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: () async{
-                  String email = _textControllerEmail.text;
-                  String password = _textControllerPassword.text;
-                  final user = await canUserSignin(email, password);
-                  if(user != null){
-                    Navigator.pushReplacement(
+              const SizedBox(height: 50),
+          
+              // Login button
+              SizedBox(
+                width: 200,
+                height: 50,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.deepPurpleAccent,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () async{
+                    String email = _textControllerEmail.text;
+                    String password = _textControllerPassword.text;
+                    final user = await canUserSignin(email, password);
+                    if(user != null){
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => MainPage(title: "Main Page", user: user,))
+                      );
+                    }
+                  },
+                  child: const Text(
+                    'Login',
+                    style: TextStyle(fontSize: 18),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 30),
+              //Register Button
+              SizedBox(
+                width: 200,
+                height: 50,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.deepPurpleAccent,
+                  ),
+                  onPressed: () {
+                    Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => MainPage(title: "Main Page", user: user,))
+                      MaterialPageRoute(builder: (context) => const RegisterPage(title: "Register Page")),
                     );
-                  }
-                },
-                child: const Text(
-                  'Login',
-                  style: TextStyle(fontSize: 18),
+                  },
+                  child: const Text(
+                    'Register',
+                    style: TextStyle(fontSize: 18),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 30),
-            //Register Button
-            SizedBox(
-              width: 200,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const RegisterPage(title: "Register Page")),
-                  );
-                },
-                child: const Text(
-                  'Register',
-                  style: TextStyle(fontSize: 18),
-                ),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -226,6 +237,7 @@ class _RegisterPageState extends State<RegisterPage>{
   @override
   Widget build(BuildContext context){
     return Scaffold(
+      backgroundColor: Colors.grey[300],
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -291,6 +303,10 @@ class _RegisterPageState extends State<RegisterPage>{
               width: 200,
               height: 50,
               child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.deepPurpleAccent,
+                    foregroundColor: Colors.white,
+                ),
                 onPressed: () async{
                   String email = _textControllerEmail.text.trim();
                   String password = _textControllerPassword.text.trim();
@@ -339,6 +355,10 @@ class _RegisterPageState extends State<RegisterPage>{
               width: 70,
               height: 50,
               child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.deepPurpleAccent,
+                ),
                 onPressed: () {
                   ScaffoldMessenger.of(context).hideCurrentSnackBar();
                   Navigator.pop(context);
@@ -471,11 +491,15 @@ class _MainPageState extends State<MainPage>{
                 width: 120,
                 height: 50,
                 child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.deepPurpleAccent,
+                  ),
                   onPressed: () {
                     Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (context) => LoginPage(title: "Login Page",))
-                      );
+                      context,
+                      MaterialPageRoute(builder: (context) => LoginPage(title: "Login Page",))
+                    );
                   },
                   child: const Text("Logout"),
                 ),
@@ -585,6 +609,10 @@ class _MainPageState extends State<MainPage>{
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.deepPurpleAccent,
+                    foregroundColor: Colors.white,
+                  ),
                   onPressed: () async {
                     await _checkUserParkingSpace();
                     Navigator.push(
