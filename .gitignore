@@ -49,3 +49,4 @@ app.*.map.json
 arduino/data/espDatabaseInfo.json
 arduino/emitter/data/espDatabaseInfo.json
 arduino/receiver/data/espDatabaseInfo.json
+arduino/receiver/credentials.h

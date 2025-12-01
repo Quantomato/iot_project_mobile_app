@@ -1,8 +1,8 @@
 #include <ESP32Servo.h>
 #include <WiFi.h>
 #include <Firebase_ESP_Client.h>
-#include <credentials.cpp>
-//#include <addons/TokenHelper.h>
+#include "credentials.h"
+#include <addons/TokenHelper.h>
 //#include <ArduinoJson.h>
 
 const int pins[] = {13, 18, 19, 21, 22};
