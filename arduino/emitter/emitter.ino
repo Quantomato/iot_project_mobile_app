@@ -7,8 +7,11 @@
 #define servo1Pin 18
 #define servo2Pin 19
 
-int lowered = 10;
-int raised = 120;
+int low1 = 30;
+int high1 = 8;
+
+int low2 = 8;
+int high2 = 30;
 
 Servo servo1;
 Servo servo2;
@@ -59,6 +62,8 @@ void setup() {
 
   servo1.attach(servo1Pin);
   servo2.attach(servo2Pin);
+  servo1.write(low1);
+  servo2.write(low2);
 }
 
 void sendIRBurst(int pin, int bursts) {
@@ -78,15 +83,15 @@ void loop() {
   delay(500);
 
   if(bollard1Raised && parkingAllowed1){
-    servo1.write(raised);
+    servo1.write(high1);
   } else{
-    servo1.write(lowered);
+    servo1.write(low1);
   }
 
   if(bollard2Raised && parkingAllowed2){
-    servo2.write(raised);
+    servo2.write(high2);
   } else{
-    servo2.write(lowered);
+    servo2.write(low2);
   }
 }
 
